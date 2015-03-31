@@ -14,6 +14,8 @@ maxPeriod = 3600; %s
 serialPortDevice = '/dev/tty.usbmodem1a1231';
 % Output CSV filename
 outFileName = [datestr(datetime) '.csv'];
+% Print serial data (debug purpose)
+printSerial = false;
 
 %% Initialization 
 baudRate = 115200;
@@ -107,7 +109,10 @@ disp(readData);
 while (ishandle(fig) && pointIdx <= numMaxPoints)
     %readasync(serialPort);
     readData = fscanf(serialPort);
-    disp(readData);
+    if (printSerial)
+        disp(readData);
+    end
+    
     valuesStr = strsplit(readData,',');
     
     if (size(valuesStr,2)<4)
