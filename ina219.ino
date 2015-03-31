@@ -3,13 +3,16 @@
 
 Adafruit_INA219 ina219;
 
-#define PERIOD 100 //ms
+/* Acquisition period. Values smaller than 500 can fullfill the serial queue causing delays and errors */
+#define PERIOD 500 //ms
 
 void setup(void) 
 {
   uint32_t currentFrequency;
     
   Serial.begin(115200);
+  
+  /* Ignore these lines when logging CSV data */
   Serial.println("Measuring voltage and current with INA219 ...");
   Serial.println("BusV[V],ShuntV[mV],LoadV[V],Current[mA]");
   ina219.begin();
@@ -27,6 +30,7 @@ void loop(void)
   current_mA = ina219.getCurrent_mA();
   loadvoltage = busvoltage + (shuntvoltage / 1000);
   
+  /* CSV output on serial */
   Serial.print(busvoltage); Serial.print(",");
   Serial.print(shuntvoltage); Serial.print(",");
   Serial.print(loadvoltage); Serial.print(",");

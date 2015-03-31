@@ -1,36 +1,47 @@
-clear;
 clc;
+%% Arduino INA219 data plot and storage
+%  Acquisition ends on figure close or maxPeriod reached
 
-acquisitionPeriod = 200; %ms
-numPointsInPlot = 100; %Number of point in plot window
+%% Parameters
 
-maxPoints = 100000;
-pointIdx = numPointsInPlot;
-
+% Acquisition period according to Arduino code
+acquisitionPeriod = 500; %ms
+% Interval shown in plots
+plotPeriod = 30; %s
+% Maximum recordable interval (to preallocate memory)
+maxPeriod = 3600; %s
+% Arduino serial port device
 serialPortDevice = '/dev/tty.usbmodem1a1231';
+% Output CSV filename
+outFileName = [datestr(datetime) '.csv'];
+
+%% Initialization 
 baudRate = 115200;
+
+numPlotPoints = floor(plotPeriod*1000/acquisitionPeriod);
+numMaxPoints = floor(maxPeriod*1000/acquisitionPeriod);
+pointIdx = numPlotPoints;
 
 serialPort = serial(serialPortDevice,'BaudRate',baudRate);
 
-outFileName = [datestr(datetime) '.csv'];
+% Vectors for plots
+timeVector = (-numPlotPoints:-1)*acquisitionPeriod/1000;
+busVVector = zeros(numPlotPoints,1);
+shuntVVector = zeros(numPlotPoints,1);
+loadVVector = zeros(numPlotPoints,1);
+currentVector = zeros(numPlotPoints,1);
+busPowerVector = zeros(numPlotPoints,1);
+loadPowerVector = zeros(numPlotPoints,1);
 
-% Vectors to store for graphs
-timeVector = (-numPointsInPlot:-1)*acquisitionPeriod/1000;
-busVVector = zeros(numPointsInPlot,1);
-shuntVVector = zeros(numPointsInPlot,1);
-loadVVector = zeros(numPointsInPlot,1);
-currentVector = zeros(numPointsInPlot,1);
-busPowerVector = zeros(numPointsInPlot,1);
-loadPowerVector = zeros(numPointsInPlot,1);
+% Vectors for CSV
+busVVectorCSV = zeros(numMaxPoints+numPlotPoints,1);
+shuntVVectorCSV = zeros(numMaxPoints+numPlotPoints,1);
+loadVVectorCSV = zeros(numMaxPoints+numPlotPoints,1);
+currentVectorCSV = zeros(numMaxPoints+numPlotPoints,1);
+busPowerVectorCSV = zeros(numMaxPoints+numPlotPoints,1);
+loadPowerVectorCSV = zeros(numMaxPoints+numPlotPoints,1);
 
-% Vectors to store for csv
-busVVectorCSV = zeros(maxPoints+numPointsInPlot,1);
-shuntVVectorCSV = zeros(maxPoints+numPointsInPlot,1);
-loadVVectorCSV = zeros(maxPoints+numPointsInPlot,1);
-currentVectorCSV = zeros(maxPoints+numPointsInPlot,1);
-busPowerVectorCSV = zeros(maxPoints+numPointsInPlot,1);
-loadPowerVectorCSV = zeros(maxPoints+numPointsInPlot,1);
-
+%% Initialize plots
 fig = figure(1);
 subplot(2,3,1);
 busVPlot = plot(timeVector,busVVector);
@@ -80,34 +91,40 @@ ylabel('Load Power [W]');
 xlabel('Time [s]');
 ylim([0 5]);
 
-% Initialize port
+%% Initialize port
 fopen(serialPort);
 readasync(serialPort);
 
-% Read The init line
-%readasync(serialPort);
+% Read the init line
 readData = fscanf(serialPort);
 disp(readData);
 
-% Read the legend
-%readasync(serialPort);
+% Read the legend line
 readData = fscanf(serialPort);
 disp(readData);
 
-while (ishandle(fig) && pointIdx <= maxPoints)
+%% Continuous capture
+while (ishandle(fig) && pointIdx <= numMaxPoints)
     %readasync(serialPort);
     readData = fscanf(serialPort);
     disp(readData);
     valuesStr = strsplit(readData,',');
-    disp(valuesStr);
+    
+    if (size(valuesStr,2)<4)
+        continue
+    end
     
     % Extract Data
-    busV = str2double(valuesStr(1)); %V
-    shuntV = str2double(valuesStr(2)); %mV
-    loadV = str2double(valuesStr(3)); %V
-    current = str2double(valuesStr(4)); %mA
+    busV = str2double(valuesStr{1}); %V
+    shuntV = str2double(valuesStr{2}); %mV
+    loadV = str2double(valuesStr{3}); %V
+    current = str2double(valuesStr{4}); %mA
     busPower = busV*current/1000; %W
     loadPower = loadV*current/1000; %W
+    
+    if (isnan(busV) || isnan(shuntV) || isnan(loadV) ||isnan(current))
+        continue
+    end
 
     % Store data
     busVVectorCSV(pointIdx) = busV;
@@ -118,12 +135,12 @@ while (ishandle(fig) && pointIdx <= maxPoints)
     loadPowerVectorCSV(pointIdx) = loadPower;
 
     % Plot data
-    busVVector = busVVectorCSV(pointIdx-numPointsInPlot+1:pointIdx);
-    shuntVVector = shuntVVectorCSV(pointIdx-numPointsInPlot+1:pointIdx);
-    loadVVector = loadVVectorCSV(pointIdx-numPointsInPlot+1:pointIdx);
-    currentVector = currentVectorCSV(pointIdx-numPointsInPlot+1:pointIdx);
-    busPowerVector = busPowerVectorCSV(pointIdx-numPointsInPlot+1:pointIdx);
-    loadPowerVector = loadPowerVectorCSV(pointIdx-numPointsInPlot+1:pointIdx);
+    busVVector = busVVectorCSV(pointIdx-numPlotPoints+1:pointIdx);
+    shuntVVector = shuntVVectorCSV(pointIdx-numPlotPoints+1:pointIdx);
+    loadVVector = loadVVectorCSV(pointIdx-numPlotPoints+1:pointIdx);
+    currentVector = currentVectorCSV(pointIdx-numPlotPoints+1:pointIdx);
+    busPowerVector = busPowerVectorCSV(pointIdx-numPlotPoints+1:pointIdx);
+    loadPowerVector = loadPowerVectorCSV(pointIdx-numPlotPoints+1:pointIdx);
     timeVector = timeVector + acquisitionPeriod/1000;
 
     pointIdx = pointIdx + 1;
@@ -138,14 +155,17 @@ while (ishandle(fig) && pointIdx <= maxPoints)
 end
 
 fclose(serialPort);
+
+%% Save CSV
+
 disp(['Saving data to ' outFileName]);
 
-busVVectorCSV = busVVectorCSV(numPointsInPlot:pointIdx-1);
-shuntVVectorCSV = shuntVVectorCSV(numPointsInPlot:pointIdx-1);
-loadVVectorCSV = loadVVectorCSV(numPointsInPlot:pointIdx-1);
-currentVectorCSV = currentVectorCSV(numPointsInPlot:pointIdx-1);
-busPowerVectorCSV = busPowerVectorCSV(numPointsInPlot:pointIdx-1);
-loadPowerVectorCSV = loadPowerVectorCSV(numPointsInPlot:pointIdx-1);
+busVVectorCSV = busVVectorCSV(numPlotPoints:pointIdx-1);
+shuntVVectorCSV = shuntVVectorCSV(numPlotPoints:pointIdx-1);
+loadVVectorCSV = loadVVectorCSV(numPlotPoints:pointIdx-1);
+currentVectorCSV = currentVectorCSV(numPlotPoints:pointIdx-1);
+busPowerVectorCSV = busPowerVectorCSV(numPlotPoints:pointIdx-1);
+loadPowerVectorCSV = loadPowerVectorCSV(numPlotPoints:pointIdx-1);
 
 csvwrite(outFileName,[...
     busVVectorCSV,shuntVVectorCSV,loadVVectorCSV,...
