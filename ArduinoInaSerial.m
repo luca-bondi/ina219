@@ -11,7 +11,7 @@ plotPeriod = 30; %s
 % Maximum recordable interval (to preallocate memory)
 maxPeriod = 3600; %s
 % Arduino serial port device
-serialPortDevice = '/dev/tty.usbmodem1a1231';
+serialPortDevice = '/dev/tty.usbmodem1d11421';
 % Output CSV filename
 outFileName = [datestr(datetime) '.csv'];
 % Print serial data (debug purpose)
@@ -57,7 +57,7 @@ subplot(2,3,2);
 shuntVPlot = plot(timeVector,shuntVVector);
 shuntVPlot.XDataSource = 'timeVector';
 shuntVPlot.YDataSource = 'shuntVVector';
-ylabel('Shunt Voltage [V]');
+ylabel('Shunt Voltage [mV]');
 xlabel('Time [s]');
 ylim([0 100]);
 
