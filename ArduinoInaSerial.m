@@ -42,6 +42,7 @@ loadVVector = zeros(numInitPlotPoints,1);
 currentVector = zeros(numInitPlotPoints,1);
 busPowerVector = zeros(numInitPlotPoints,1);
 loadPowerVector = zeros(numInitPlotPoints,1);
+markerVector = zeros(numInitPlotPoints,1);
 
 % Vectors for CSV
 timeVectorCSV = zeros(numMaxPoints+numInitPlotPoints,1);
@@ -51,9 +52,12 @@ loadVVectorCSV = zeros(numMaxPoints+numInitPlotPoints,1);
 currentVectorCSV = zeros(numMaxPoints+numInitPlotPoints,1);
 busPowerVectorCSV = zeros(numMaxPoints+numInitPlotPoints,1);
 loadPowerVectorCSV = zeros(numMaxPoints+numInitPlotPoints,1);
+markerVectorCSV = zeros(numMaxPoints+numInitPlotPoints,1);
 
 %% Initialize plots
 fig = figure(1);
+
+set(fig,'KeyPressFcn','markerVectorCSV(pointIdx-1)=1000;disp(mean(loadPowerVectorCSV(pointIdx-10:pointIdx-1)))');
 
 plotIdx = 1;
 
@@ -62,6 +66,10 @@ if plotsFlag(1)
     busVPlot = plot(timeVector,busVVector);
     busVPlot.XDataSource = 'timeVector';
     busVPlot.YDataSource = 'busVVector';
+    hold on;
+    busVPlotMarker = plot(timeVector,markerVector);
+    busVPlotMarker.XDataSource = 'timeVector';
+    busVPlotMarker.YDataSource = 'markerVector';
     grid on;
     ylabel('Bus Voltage [V]');
     xlabel('Time [s]');
@@ -74,6 +82,10 @@ if plotsFlag(2)
     shuntVPlot = plot(timeVector,shuntVVector);
     shuntVPlot.XDataSource = 'timeVector';
     shuntVPlot.YDataSource = 'shuntVVector';
+    hold on;
+    shuntVPlotMarker = plot(timeVector,markerVector);
+    shuntVPlotMarker.XDataSource = 'timeVector';
+    shuntVPlotMarker.YDataSource = 'markerVector';
     grid on;
     ylabel('Shunt Voltage [mV]');
     xlabel('Time [s]');
@@ -86,6 +98,10 @@ if plotsFlag(3)
     loadVPlot = plot(timeVector,loadVVector);
     loadVPlot.XDataSource = 'timeVector';
     loadVPlot.YDataSource = 'loadVVector';
+    hold on;
+    loadVPlotMarker = plot(timeVector,markerVector);
+    loadVPlotMarker.XDataSource = 'timeVector';
+    loadVPlotMarker.YDataSource = 'markerVector';
     grid on;
     ylabel('Load Voltage [V]');
     xlabel('Time [s]');
@@ -98,6 +114,10 @@ if plotsFlag(4)
     currentPlot = plot(timeVector,currentVector);
     currentPlot.XDataSource = 'timeVector';
     currentPlot.YDataSource = 'currentVector';
+    hold on;
+    currentMarker = plot(timeVector,markerVector);
+    currentMarker.XDataSource = 'timeVector';
+    currentMarker.YDataSource = 'markerVector';
     grid on;
     ylabel('Current Drain [mA]');
     xlabel('Time [s]');
@@ -110,6 +130,10 @@ if plotsFlag(5)
     busPowerplot = plot(timeVector,busPowerVector);
     busPowerplot.XDataSource = 'timeVector';
     busPowerplot.YDataSource = 'busPowerVector';
+    hold on;
+    busPowerMarker = plot(timeVector,markerVector);
+    busPowerMarker.XDataSource = 'timeVector';
+    busPowerMarker.YDataSource = 'markerVector';
     grid on;
     ylabel('Bus Power [W]');
     xlabel('Time [s]');
@@ -122,6 +146,10 @@ if plotsFlag(6)
     loadPowerPlot = plot(timeVector,loadPowerVector);
     loadPowerPlot.XDataSource = 'timeVector';
     loadPowerPlot.YDataSource = 'loadPowerVector';
+    hold on;
+    loadPowerMarker = plot(timeVector,markerVector);
+    loadPowerMarker.XDataSource = 'timeVector';
+    loadPowerMarker.YDataSource = 'markerVector';
     grid on;
     ylabel('Load Power [W]');
     xlabel('Time [s]');
@@ -179,6 +207,7 @@ while (ishandle(fig) && pointIdx <= numMaxPoints)
         currentVector = currentVectorCSV(plotPointsIdxs);
         busPowerVector = busPowerVectorCSV(plotPointsIdxs);
         loadPowerVector = loadPowerVectorCSV(plotPointsIdxs);
+        markerVector = markerVectorCSV(plotPointsIdxs);
 
         for idx = plotsNum
             subplot(plotsRows,plotsCols,idx);
@@ -205,7 +234,8 @@ loadVVectorCSV = loadVVectorCSV(numInitPlotPoints:pointIdx-1);
 currentVectorCSV = currentVectorCSV(numInitPlotPoints:pointIdx-1);
 busPowerVectorCSV = busPowerVectorCSV(numInitPlotPoints:pointIdx-1);
 loadPowerVectorCSV = loadPowerVectorCSV(numInitPlotPoints:pointIdx-1);
+markerVectorCSV = markerVectorCSV(numInitPlotPoints:pointIdx-1);
 
 csvwrite(outFileName,[...
     timeVectorCSV,busVVectorCSV,shuntVVectorCSV,loadVVectorCSV,...
-    currentVectorCSV,busPowerVectorCSV,loadPowerVectorCSV]);
+    currentVectorCSV,busPowerVectorCSV,loadPowerVectorCSV,markerVectorCSV]);
