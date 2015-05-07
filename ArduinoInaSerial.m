@@ -9,12 +9,15 @@ plotsFlag = [0 0 0 0 0 1];
 refreshPeriod = 500; %ms
 % Interval shown in plots
 plotPeriod = 60; %s
+% Points of mean when showing data
+pointMean = 100;
 % Maximum recordable interval (to preallocate memory)
 maxPeriod = 3600; %s
 % Arduino serial port device
-serialPortDevice = '/dev/tty.usbmodem1a12421';
+serialPortDevice = '/dev/tty.usbmodem1a12411';
 % Output CSV filename
-outFileName = [datestr(datetime) '.csv'];
+%outFileName = [datestr(datetime) '.csv'];
+outFileName = ['capture.csv'];
 
 %% Initialization 
 baudRate = 115200;
@@ -57,7 +60,7 @@ markerVectorCSV = zeros(numMaxPoints+numInitPlotPoints,1);
 %% Initialize plots
 fig = figure(1);
 
-set(fig,'KeyPressFcn','markerVectorCSV(pointIdx-1)=1000;disp(mean(loadPowerVectorCSV(pointIdx-10:pointIdx-1)))');
+set(fig,'KeyPressFcn','markerVectorCSV(pointIdx-pointMean:pointIdx-1)=1000;disp(mean(loadPowerVectorCSV(pointIdx-pointMean:pointIdx-1)))');
 
 plotIdx = 1;
 
@@ -209,7 +212,7 @@ while (ishandle(fig) && pointIdx <= numMaxPoints)
         loadPowerVector = loadPowerVectorCSV(plotPointsIdxs);
         markerVector = markerVectorCSV(plotPointsIdxs);
 
-        for idx = plotsNum
+        for idx = 1:plotsNum
             subplot(plotsRows,plotsCols,idx);
             xlim([min(timeVector),max(timeVector)]);
         end
